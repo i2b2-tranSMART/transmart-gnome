@@ -7,15 +7,12 @@ import groovy.transform.CompileDynamic
 import groovy.transform.CompileStatic
 import groovy.util.logging.Slf4j
 import oracle.jdbc.OracleTypes
-import org.apache.http.Header
 import org.apache.http.HttpResponse
-import org.apache.http.NameValuePair
 import org.apache.http.auth.AuthScope
 import org.apache.http.auth.UsernamePasswordCredentials
 import org.apache.http.client.CredentialsProvider
 import org.apache.http.client.HttpClient
 import org.apache.http.client.HttpResponseException
-import org.apache.http.client.entity.UrlEncodedFormEntity
 import org.apache.http.client.methods.HttpPost
 import org.apache.http.entity.StringEntity
 import org.apache.http.impl.client.BasicCredentialsProvider
@@ -30,9 +27,14 @@ import java.sql.ResultSet
 import static org.apache.http.HttpStatus.SC_BAD_REQUEST
 import static org.apache.http.HttpStatus.SC_OK
 
+/**
+ * @author <a href='mailto:burt_beckwith@hms.harvard.edu'>Burt Beckwith</a>
+ */
 @CompileStatic
 @Slf4j('logger')
 class GnomeService {
+
+	static transactional = false
 
 	private static final ResultSetOutParameter REF_CURSOR = Sql.resultSet(OracleTypes.CURSOR)
 
@@ -44,8 +46,7 @@ class GnomeService {
 		String sql = 'BEGIN TM_QUERY_UTILITY.GET_SOURCE_ID_BY_RI(?, ?); END;'
 
 		List<String> uuids = []
-		new Sql(dataSource).call(sql, [resultInstanceId, REF_CURSOR]) { cursorResults ->
-			ResultSet rs = (ResultSet) cursorResults
+		new Sql(dataSource).call(sql, [resultInstanceId, REF_CURSOR]) { ResultSet rs ->
 			rs.eachRow { row ->
 				uuids << row[0].toString().replace('-', '_')
 			}

@@ -1,32 +1,46 @@
 package org.transmart.plugin.gnome
 
+import grails.converters.JSON
 import groovy.util.logging.Slf4j
 import org.apache.http.client.HttpResponseException
 import org.springframework.beans.factory.annotation.Autowired
-import org.springframework.beans.factory.annotation.Value
 
 import static org.apache.http.HttpStatus.SC_BAD_REQUEST
 import static org.apache.http.HttpStatus.SC_UNAUTHORIZED
 
+/**
+ * @author <a href='mailto:burt_beckwith@hms.harvard.edu'>Burt Beckwith</a>
+ */
 @Slf4j('logger')
 class GnomeController {
 
 	@Autowired private GnomeService gnomeService
+	@Autowired private GnomeConfig gnomeConfig
 
-	@Value('${com.recomdata.gnome.url:}')
-	private String baseUrl
+	/**
+	 * Called at startup to configure UI.
+	 */
+	def loadScripts() {
 
-	@Value('${com.recomdata.gnome.password:}')
-	private String password
+		List rows = [
+			[path: resource(dir: 'js', file: 'gnome.js'), type: 'script']
+		]
 
-	@Value('${com.recomdata.gnome.username:}')
-	private String username
+		render([success: true, totalCount: rows.size(), files: rows] as JSON)
+	}
+
+	/**
+	 * Ajax call from gnome.js to get the project names.
+	 */
+	def projectNames() {
+		render(gnomeConfig.gNomeProjects as JSON)
+	}
 
 	/**
 	 * Authenticate with gnome, construct gnome subset URL and redirect to that URL.
 	 */
 	def analyzegnomeapi(String result_instance_id, String project, String type) {
-		if (!baseUrl || !username || !password) {
+		if (!gnomeConfig.baseUrl || !gnomeConfig.username || !gnomeConfig.password) {
 			response.status = SC_BAD_REQUEST
 			render 'Gnome is not fully configured. Please contact administrator.'
 			return
@@ -40,8 +54,8 @@ class GnomeController {
 				return
 			}
 
-			String token = gnomeService.authenticateWithGnome(baseUrl, username, password)
-			render gnomeService.getSubsetUrl(baseUrl, username, password, token, project, type, uuidList)
+			String token = gnomeService.authenticateWithGnome(gnomeConfig.baseUrl, gnomeConfig.username, gnomeConfig.password)
+			render gnomeService.getSubsetUrl(gnomeConfig.baseUrl, gnomeConfig.username, gnomeConfig.password, token, project, type, uuidList)
 		}
 		catch (HttpResponseException e) {
 			logger.error e.message, e
