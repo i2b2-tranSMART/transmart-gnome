@@ -23,7 +23,7 @@ class GnomeController {
 	def loadScripts() {
 
 		List rows = [
-			[path: resource(dir: 'js', file: 'gnome.js'), type: 'script']
+			[path: resource(dir: 'js', file: 'gnome.js', plugin: 'transmart-gnome'), type: 'script']
 		]
 
 		render([success: true, totalCount: rows.size(), files: rows] as JSON)
